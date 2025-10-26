@@ -1,0 +1,19 @@
+Border	Range of k	Coordinates	Formula
+Top	0 ≤ k < N	(x = k, y = 0)	—
+Right	N ≤ k < 2N-1	(x = N-1, y = k - (N-1))	—
+Bottom	2N-1 ≤ k < 3N-2	(x = (N-1) - (k - (2N-2)), y = N-1)	—
+Left	3N-2 ≤ k < 4N-4	(x = 0, y = (N-1) - (k - (3N-3)))	—
+
+
+# First things first
+
+I need to get a board which have the informations needed:
+- size of the square board
+- number of clues
+- possibilities of answer
+- possibility number
+- the clue for each line
+- the starting cell of each clue
+- the direction of each clue
+- the answers for each line (in this case, number of line = board size * 2)
+
