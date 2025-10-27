@@ -5,19 +5,187 @@
 #include <stdbool.h>
 
 
-static void try_possible_row(board_info_t *b, uint32_t row) {
+static bool line_clue_checker(uint32_t *line, uint32_t ss, uint32_t clue1, uint32_t clue2) {
+    uint32_t counter = 0;
+    uint32_t lowest = 0;
 
+    for (uint32_t i = 0; i < ss; i++) {
+        if (line[i] > lowest) {
+            lowest = line[i];
+            counter++;
+            if (counter > clue1) {
+                return false;
+            }
+        }
+    }
+
+    if (counter != clue1)
+        return false;
+
+    counter = 0;
+    lowest = 0;
+
+    for (uint32_t i = 0; i < ss; i++) {
+        if (line[ss - 1 - i] > lowest) {
+            lowest = line[ss - 1 - i];
+            counter++;
+            if (counter > clue2) {
+                return false;
+            }
+        }
+    }
+
+    if (counter != clue2)
+        return false;
+
+    return true;
 }
 
-static void try_possible_col(board_info_t *b, uint32_t row) {
+
+static uint32_t is_value_in_array(uint32_t val, uint32_t *array, uint32_t size) {
+    for (uint32_t i = 0; i < size; i++)
+        if (array[i] == val)
+            return i;
+    return UINT32_MAX;
+}
+
+
+static void generate_all_comb(const board_cell_t *line, const uint32_t line_len,
+                              uint32_t *current, uint32_t **all_comb,
+                              const uint32_t depth, uint32_t *index,
+                              uint32_t clue1, uint32_t clue2) {
+    if (depth == line_len) {
+        if (!line_clue_checker(current, line_len, clue1, clue2))
+            return;
+
+        for (uint32_t i = 0; i < line_len; i++) {
+            all_comb[*index][i] = current[i];
+        }
+        (*index)++;
+        return;
+    }
+
+    for (uint32_t i = 0; i < line_len; i++) {
+        if (line[depth].poss[i] > 0 &&
+            is_value_in_array(line[depth].poss[i], current, depth) == UINT32_MAX) {
+            current[depth] = line[depth].poss[i];
+            generate_all_comb(line, line_len, current, all_comb, depth + 1, index, clue1, clue2);
+        }
+    }
+}
+
+
+static void try_possible_row(board_info_t *b, uint32_t row) {
+    uint32_t all_comb_nb = 1;
+    uint32_t **all_comb = NULL;
+    uint32_t *current = malloc(sizeof(int) * b->ss);
+    board_cell_t *line = malloc(sizeof(board_cell_t) * b->ss);
+    uint32_t clue1 = b->clues[b->ss * 4 - 1 - row].clue;
+    uint32_t clue2 = b->clues[b->ss + row].clue;
+    uint32_t index = 0;
+
+    for (uint32_t col = 0; col < b->ss; col++) {
+        line[col] = b->board[row][col];
+        all_comb_nb *= b->board[row][col].poss_nb;
+    }
+
+    if (all_comb_nb == 1) {
+        free(current);
+        free(line);
+        return;
+    }
+
+    all_comb = malloc(sizeof(uint32_t *) * all_comb_nb);
+    for (uint32_t i = 0; i < all_comb_nb; i++)
+        all_comb[i] = calloc(sizeof(uint32_t), b->ss);
+
+    generate_all_comb(line, b->ss, current, all_comb, 0, &index, clue1, clue2);
+
+    for (uint32_t i = 0; i < b->ss; i++)
+        current[i] = 0;
+
+    if (all_comb[0][0] != 0) {
+        for (uint32_t i = 0; all_comb[i][0] != 0 && i < all_comb_nb; i++) {
+            for (uint32_t col = 0; col < b->ss; col++) {
+                if (current[col] == 0) {
+                    current[col] = all_comb[i][col];
+                } else if (current[col] != 0 && current[col] != all_comb[i][col]) {
+                    current[col] = b->ss + 1;
+                }
+            }
+        }
+    }
+
+    for (uint32_t col = 0; col < b->ss; col++) {
+        if (current[col] > 0 && current[col] < b->ss + 1) {
+            set_answer(b, row, col, current[col]);
+        }
+    }
+
+
+    for (uint32_t i = 0; i < all_comb_nb; i++)
+        free(all_comb[i]);
+    free(all_comb);
+    free(line);
+}
+
+static void try_possible_col(board_info_t *b, uint32_t col) {
+    uint32_t all_comb_nb = 1;
+    uint32_t **all_comb = NULL;
+    uint32_t *current = malloc(sizeof(int) * b->ss);
+    board_cell_t *line = malloc(sizeof(board_cell_t) * b->ss);
+    uint32_t clue1 = b->clues[col].clue;
+    uint32_t clue2 = b->clues[b->ss * 2 + col].clue;
+    uint32_t index = 0;
+
+    for (uint32_t row = 0; row < b->ss; row++) {
+        line[row] = b->board[row][col];
+        all_comb_nb *= b->board[row][col].poss_nb;
+    }
+
+    if (all_comb_nb == 1) {
+        free(current);
+        free(line);
+        return;
+    }
+
+    all_comb = malloc(sizeof(uint32_t *) * all_comb_nb);
+    for (uint32_t i = 0; i < all_comb_nb; i++)
+        all_comb[i] = calloc(sizeof(uint32_t), b->ss);
+
+    generate_all_comb(line, b->ss, current, all_comb, 0, &index, clue1, clue2);
+
+    for (uint32_t i = 0; i < b->ss; i++)
+        current[i] = 0;
+
+    if (all_comb[0][0] != 0) {
+        for (uint32_t i = 0; all_comb[i][0] != 0 && i < all_comb_nb; i++) {
+            for (uint32_t row = 0; row < b->ss; row++) {
+                if (current[row] == 0) {
+                    current[row] = all_comb[i][row];
+                } else if (current[row] != 0 && current[row] != all_comb[i][row]) {
+                    current[row] = b->ss + 1;
+                }
+            }
+        }
+    }
+
+    for (uint32_t row = 0; row < b->ss; row++) {
+        if (current[row] > 0 && current[row] < b->ss + 1) {
+            set_answer(b, row, col, current[row]);
+        }
+    }
+
+    for (uint32_t i = 0; i < all_comb_nb; i++)
+        free(all_comb[i]);
+    free(all_comb);
+    free(line);
 }
 
 static void try_possible_lines(board_info_t *b) {
-    for (uint32_t row = 0; row < b->ss; row++) {
-        for (uint32_t col = 0; col < b->ss; col++) {
-            try_possible_row(b, row);
-            try_possible_col(b, col);
-        }
+    for (uint32_t i = 0; i < b->ss; i++) {
+        try_possible_row(b, i);
+        try_possible_col(b, i);
     }
 }
 
@@ -87,6 +255,9 @@ void elim_answered_poss_row(board_info_t *b, uint32_t row) {
 }
 
 void set_answer(board_info_t *b, uint32_t row, uint32_t col, uint32_t answer) {
+    if (b->board[row][col].answer == answer)
+        return;
+
     for (uint32_t i = 0; i < b->ss; i++)
         b->board[row][col].poss[i] = 0;
 
@@ -255,7 +426,7 @@ static void clue_constructor(clues_info_t *clue_info, uint32_t clue,
 }
 
 static clues_info_t *clue_parser(char *str_clues, uint32_t ss) {
-    uint32_t clue_nb = 4 * ss;
+    uint32_t clue_nb = ss * 4;
     clues_info_t *clues = malloc(sizeof(clues_info_t) * clue_nb);
 
     // clue_nb - 1 because there are no ',' for the first clue
@@ -273,11 +444,13 @@ static clues_info_t *clue_parser(char *str_clues, uint32_t ss) {
         else
             clue_constructor(&clues[i], atoi(str_clues),
                              (ss - 1) - (i - (3 * ss)), 0, RIGHT, ss);
-
         while (str_clues[0] != ',')
             str_clues++;
         str_clues++;
     }
+
+    clue_constructor(&clues[clue_nb - 1], atoi(str_clues),
+                     (ss - 1) - (clue_nb - 1 - (3 * ss)), 0, RIGHT, ss);
 
     return clues;
 }
@@ -327,5 +500,8 @@ void skyscrapers_solver(uint32_t square_size, char *str_clues) {
 
     print_board(&b);
 
-    try_possible_lines(&b);
+    for (int i = 0; i < 20; i++) {
+        try_possible_lines(&b);
+        print_board(&b);
+    }
 }

@@ -17,3 +17,7 @@ I need to get a board which have the informations needed:
 - the direction of each clue
 - the answers for each line (in this case, number of line = board size * 2)
 
+
+
+./skyscrapers 5 "0,0,0,3,3,2,0,0,0,2,0,0,0,4,0,0,5,0,0,2"
+https://www.brainbashers.com/showskyscrapers.asp?date=1019&size=5&diff=3
