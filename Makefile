@@ -19,6 +19,10 @@ all:
 $(NAME): $(OBJ)
 	$(CC) $(OBJ) -o $(NAME)
 
+debug: CFLAGS += -DDEBUG -g
+debug: all
+
+
 clean:
 	rm -f $(OBJ)
 
@@ -26,3 +30,5 @@ fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
+
+re_debug: fclean debug

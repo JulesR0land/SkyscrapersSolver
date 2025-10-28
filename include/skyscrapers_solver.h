@@ -32,8 +32,12 @@ typedef struct board_info_s {
     uint32_t ss;            // square_size
     uint32_t clue_nb;
 
+    uint32_t answer_nb;
+    uint32_t win;
+
     board_cell_t **board;
     clues_info_t *clues;
+
     line_answers_t *row_answers;
     line_answers_t *col_answers;
 } board_info_t;
@@ -45,6 +49,8 @@ void elim_answered_poss_row(board_info_t *b, uint32_t row);
 void set_answer(board_info_t *b, uint32_t row, uint32_t col, uint32_t answer);
 
 int remove_cell_poss(board_info_t *b, uint32_t row, uint32_t col, int possibility);
+uint32_t remove_cell_n_poss(board_info_t *b, uint32_t row, uint32_t col,
+                            uint32_t *poss_array, uint32_t n);
 
 void skyscrapers_solver(uint32_t square_size, char *str_clues);
 
