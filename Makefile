@@ -1,4 +1,4 @@
-.PHONY: all $(NAME) clean fclean re run-tests
+.PHONY: all $(NAME) clean fclean re debug re_debug
 
 SRC			=	main.c						\
 				src/skyscrapers_solver.c
@@ -8,20 +8,17 @@ NAME		=	skyscrapers
 CC			=	gcc
 
 CFLAGS		=	-Wall -Wextra
-
 CPPFLAGS	=	-I include/
 
 OBJ			=	$(SRC:.c=.o)
 
-all:
-	make $(NAME)
+all: $(NAME)
 
 $(NAME): $(OBJ)
 	$(CC) $(OBJ) -o $(NAME)
 
-debug: CFLAGS += -DDEBUG -g
-debug: all
-
+debug: CFLAGS += -DDEBUG -g3 -O0 -fno-omit-frame-pointer
+debug: $(NAME)
 
 clean:
 	rm -f $(OBJ)

@@ -31,6 +31,7 @@ typedef struct board_cell_s {
 typedef struct board_info_s {
     uint32_t ss;            // square_size
     uint32_t clue_nb;
+    uint32_t remaining_poss_nb;
 
     uint32_t answer_nb;
     uint32_t win;

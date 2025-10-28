@@ -110,7 +110,7 @@ static void try_possible_row(board_info_t *b, uint32_t row) {
 
     all_comb = malloc(sizeof(uint32_t *) * all_comb_nb);
     for (uint32_t i = 0; i < all_comb_nb; i++)
-        all_comb[i] = calloc(sizeof(uint32_t), b->ss);
+        all_comb[i] = calloc(b->ss, sizeof(uint32_t));
 
     generate_all_comb(line, b->ss, current, all_comb, 0, &index, clue1, clue2);
 
@@ -139,7 +139,7 @@ static void try_possible_col(board_info_t *b, uint32_t col) {
     uint32_t *current = malloc(sizeof(int) * b->ss);
     board_cell_t *line = malloc(sizeof(board_cell_t) * b->ss);
     uint32_t clue1 = b->clues[col].clue;
-    uint32_t clue2 = b->clues[b->ss * 2 + col].clue;
+    uint32_t clue2 = b->clues[b->ss * 3 - 1 - col].clue;
     uint32_t index = 0;
 
     for (uint32_t row = 0; row < b->ss; row++) {
@@ -155,7 +155,7 @@ static void try_possible_col(board_info_t *b, uint32_t col) {
 
     all_comb = malloc(sizeof(uint32_t *) * all_comb_nb);
     for (uint32_t i = 0; i < all_comb_nb; i++)
-        all_comb[i] = calloc(sizeof(uint32_t), b->ss);
+        all_comb[i] = calloc(b->ss, sizeof(uint32_t));
 
     generate_all_comb(line, b->ss, current, all_comb, 0, &index, clue1, clue2);
 
@@ -189,8 +189,8 @@ static void try_possible_lines(board_info_t *b) {
 
 
 static void check_alone_poss_row(board_info_t *b, uint32_t row) {
-    uint32_t *counter = calloc(sizeof(bool), b->ss);
-    uint32_t *last_counted = calloc(sizeof(bool), b->ss);
+    uint32_t *counter = calloc(b->ss, sizeof(uint32_t));
+    uint32_t *last_counted = calloc(b->ss, sizeof(uint32_t));
 
     for (uint32_t col = 0; col < b->ss; col++)
         if (b->board[row][col].poss_nb > 1)
@@ -209,8 +209,8 @@ static void check_alone_poss_row(board_info_t *b, uint32_t row) {
 }
 
 static void check_alone_poss_col(board_info_t *b, uint32_t col) {
-    uint32_t *counter = calloc(sizeof(bool), b->ss);
-    uint32_t *last_counted = calloc(sizeof(bool), b->ss);
+    uint32_t *counter = calloc(b->ss, sizeof(uint32_t));
+    uint32_t *last_counted = calloc(b->ss, sizeof(uint32_t));
 
     for (uint32_t row = 0; row < b->ss; row++)
         if (b->board[row][col].poss_nb > 1)
@@ -289,8 +289,7 @@ static bool check_poss_to_answer(board_info_t *b, uint32_t row, uint32_t col) {
 
     b->board[row][col].answer = b->board[row][col].poss[i];
 
-    b->row_answers[row].answers[b->row_answers[row].answer_nb] =
-        b->board[row][col].answer;
+    b->row_answers[row].answers[b->row_answers[row].answer_nb] = b->board[row][col].answer;
     b->row_answers[row].answer_nb++;
 
     b->col_answers[col].answers[b->col_answers[col].answer_nb] =
@@ -321,6 +320,7 @@ uint32_t remove_cell_n_poss(board_info_t *b, uint32_t row, uint32_t col,
 
     if (poss_removed > 0) {
         b->board[row][col].poss_nb -= poss_removed;
+        b->remaining_poss_nb -= poss_removed;
         check_poss_to_answer(b, row, col);
     }
 
@@ -334,6 +334,7 @@ int remove_cell_poss(board_info_t *b, uint32_t row, uint32_t col, int possibilit
 
     b->board[row][col].poss[possibility - 1] = 0;
     b->board[row][col].poss_nb -= 1;
+    b->remaining_poss_nb -= 1;
 
     check_poss_to_answer(b, row, col);
 
@@ -373,18 +374,25 @@ static void clue_border_elimination(board_info_t *b) {
 
 
 static void print_board(board_info_t *b) {
-    printf("--------------------------------------------\n\n");
+    printf("\n");
+    for (uint32_t i = 0; i < b->ss; i++)
+        printf("\t   %d", b->clues[i].clue);
+    printf("\n\t_________________________________________________________\n\n");
     for (uint32_t row = 0; row < b->ss; row++) {
+        printf("%d\t|", b->clues[b->ss * 3 + (b->ss - 1 - row)].clue);
         for (uint32_t col = 0; col < b->ss; col++) {
             for (uint32_t i = 0; i < b->ss; i++) {
                 if (b->board[row][col].poss[i] > 0)
                     printf("%d", b->board[row][col].poss[i]);
             }
-            printf("\t");
+            printf("\t|");
         }
-        printf("\n\n");
+        printf("\t%d", b->clues[b->ss + row].clue);
+        printf("\n\t_________________________________________________________\n\n");
     }
-    printf("--------------------------------------------\n");
+    for (uint32_t i = 0; i < b->ss; i++)
+        printf("\t   %d", b->clues[b->ss * 2 + (b->ss - 1 - i)].clue);
+    printf("\n--------------------------------------------\n");
 }
 
 
@@ -393,11 +401,11 @@ static void line_answers_initializer(board_info_t *b) {
     b->col_answers = malloc(sizeof(line_answers_t) * b->ss);
 
     for (uint32_t i = 0; i < b->ss; i++) {
-        b->row_answers[i].answers = calloc(sizeof(uint32_t), b->ss);
-        b->row_answers->answer_nb = 0;
+        b->row_answers[i].answers = calloc(b->ss, sizeof(uint32_t));
+        b->row_answers[i].answer_nb = 0;
 
-        b->col_answers[i].answers = calloc(sizeof(uint32_t), b->ss);
-        b->col_answers->answer_nb = 0;
+        b->col_answers[i].answers = calloc(b->ss, sizeof(uint32_t));
+        b->col_answers[i].answer_nb = 0;
     }
 }
 
@@ -432,7 +440,7 @@ static void clue_constructor(clues_info_t *clue_info, uint32_t clue,
 }
 
 static clues_info_t *clue_parser(char *str_clues, uint32_t ss) {
-    uint32_t clue_nb = ss * 4;
+    uint32_t clue_nb = 4 * ss;
     clues_info_t *clues = malloc(sizeof(clues_info_t) * clue_nb);
 
     // clue_nb - 1 because there are no ',' for the first clue
@@ -574,6 +582,7 @@ static void copy_board_cells(board_cell_t **orig, board_cell_t **copy, uint32_t 
 static void copy_board_info(board_info_t *orig, board_info_t *copy) {
     copy->ss = orig->ss;
     copy->clue_nb = orig->clue_nb;
+    copy->remaining_poss_nb = orig->remaining_poss_nb;
 
     copy->answer_nb = orig->answer_nb;
     copy->win = orig->win;
@@ -583,18 +592,17 @@ static void copy_board_info(board_info_t *orig, board_info_t *copy) {
 
     copy->clues = orig->clues;
 
-    copy->row_answers = malloc(sizeof(line_answers_t) * orig->ss);
+    line_answers_initializer(copy);
+
     for (uint32_t i = 0; i < orig->ss; i++) {
         copy->row_answers[i].answer_nb = orig->row_answers[i].answer_nb;
-        copy->row_answers[i].answers = malloc(sizeof(line_answers_t) * orig->ss);
         for (uint32_t j = 0; j < orig->ss; j++) {
             copy->row_answers[i].answers[j] = orig->row_answers[i].answers[j];
         }
     }
-    copy->col_answers = malloc(sizeof(line_answers_t) * orig->ss);
+
     for (uint32_t i = 0; i < orig->ss; i++) {
         copy->col_answers[i].answer_nb = orig->col_answers[i].answer_nb;
-        copy->col_answers[i].answers = malloc(sizeof(line_answers_t) * orig->ss);
         for (uint32_t j = 0; j < orig->ss; j++) {
             copy->col_answers[i].answers[j] = orig->col_answers[i].answers[j];
         }
@@ -604,12 +612,14 @@ static void copy_board_info(board_info_t *orig, board_info_t *copy) {
 
 bool recursive_it(board_info_t *b) {
     board_info_t copy;
-    uint32_t current_answer_nb = b->answer_nb;
+    uint32_t current_poss_nb = b->remaining_poss_nb;
 
     do {
-        current_answer_nb = b->answer_nb;
+        current_poss_nb = b->remaining_poss_nb;
         try_possible_lines(b);
-    } while (current_answer_nb != b->answer_nb);
+        //printf("4");
+        //print_board(b);
+    } while (current_poss_nb != b->remaining_poss_nb);
 
     if (b->answer_nb == b->win)
         return check_win(b);
@@ -625,15 +635,40 @@ bool recursive_it(board_info_t *b) {
 }
 
 
+void free_board_info(board_info_t *b) {
+    for (uint32_t row = 0; row < b->ss; row++) {
+        for (uint32_t col = 0; col < b->ss; col++) {
+            free(b->board[row][col].poss);
+        }
+        free(b->board[row]);
+    }
+    free(b->board);
+
+    for (uint32_t i = 0; i < b->clue_nb; i++) {
+        free(b->clues[i].answers);
+    }
+    free(b->clues);
+
+    for (uint32_t i = 0; i < b->ss; i++) {
+        free(b->row_answers[i].answers);
+        free(b->col_answers[i].answers);
+    }
+    free(b->row_answers);
+    free(b->col_answers);
+}
+
+
 void skyscrapers_solver(uint32_t square_size, char *str_clues) {
     board_info_t b;
 
     b.ss = square_size;
     b.answer_nb = 0;
     b.win = b.ss * b.ss;
-    b.clue_nb = b.ss * b.ss;
+    b.clue_nb = 4 * b.ss;
+    b.remaining_poss_nb = b.ss * b.ss * b.ss;
     b.board = board_initializer(b.ss);
     b.clues = clue_parser(str_clues, b.ss);
+
 
     line_answers_initializer(&b);
     //printf("1");
@@ -653,4 +688,6 @@ void skyscrapers_solver(uint32_t square_size, char *str_clues) {
         printf("YO IT'S IMPOSSIBLE WTF !\n");
     //printf("5");
     print_board(&b);
+
+    free_board_info(&b);
 }
