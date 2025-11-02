@@ -5,7 +5,12 @@
 
 #include "skyscrapers_structs.h"
 
-void print_board(skyscrapers_data_t *data);
+bool next_guess(skyscrapers_data_t *data, int try_counter);
+
+bool is_win(skyscrapers_data_t *data);
+
+bool recursive_solving(skyscrapers_data_t *data);
+
 void skyscrapers_solver(int square_size, char *str_clues);
 
 

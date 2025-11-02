@@ -1,9 +1,12 @@
 .PHONY: all $(NAME) clean fclean re debug re_debug
 
-SRC			=	main.c						\
-				src/skyscrapers_solver.c	\
-				src/skyscrapers_lines.c		\
-				src/skyscrapers_cells.c
+SRC			=	main.c							\
+				src/skyscrapers_solver.c		\
+				src/skyscrapers_lines.c			\
+				src/skyscrapers_cells.c			\
+				src/skyscrapers_data.c			\
+				src/skyscrapers_eliminations.c	\
+				src/skyscrapers_utils.c
 
 NAME		=	skyscrapers
 

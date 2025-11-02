@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h> // to delete
 
 #include "skyscrapers_cells.h"
 
@@ -44,7 +43,7 @@ void free_cell(cell_t *cell) {
 }
 
 
-static int propagate_answer(cell_t *cell, int size) {
+int propagate_answer(cell_t *cell, int size) {
     int removed_poss = 0;
 
     for (int i = 0; i < size; i++) {
